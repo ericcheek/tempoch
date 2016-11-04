@@ -1,10 +1,14 @@
-(defproject binaryage/chromex-sample "0.1.0-SNAPSHOT"
+(defproject tempoch "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha12"]
                  [org.clojure/clojurescript "1.9.229"]
                  [org.clojure/core.async "0.2.391"]
                  [binaryage/chromex "0.5.1"]
                  [binaryage/devtools "0.8.2"]
+                 [reagent "0.5.1"]
+                 [garden "1.3.0"]
                  [figwheel "0.5.7"]
+                 [com.cemerick/piggieback "0.2.1"]
+                 [figwheel-sidecar "0.5.2"]
                  [environ "1.1.0"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
@@ -15,7 +19,8 @@
 
   :source-paths ["src/background"
                  "src/popup"
-                 "src/content_script"]
+                 "src/content_script"
+                 "src/newtab"]
 
   :clean-targets ^{:protect false} ["target"
                                     "resources/unpacked/compiled"
@@ -33,6 +38,16 @@
                                            :asset-path    "compiled/background"
                                            :preloads      [devtools.preload]
                                            :main          chromex-sample.background
+                                           :optimizations :none
+                                           :source-map    true}}
+                           :newtab
+                           {:source-paths ["src/newtab"]
+                            :figwheel     true
+                            :compiler     {:output-to     "resources/unpacked/compiled/newtab/main.js"
+                                           :output-dir    "resources/unpacked/compiled/newtab"
+                                           :asset-path    "compiled/newtab"
+                                           :preloads      [devtools.preload]
+                                           :main          tempoch.newtab
                                            :optimizations :none
                                            :source-map    true}}
                            :popup
@@ -100,6 +115,14 @@
                                            :main          chromex-sample.popup
                                            :optimizations :advanced
                                            :elide-asserts true}}
+                           :newtab
+                           {:source-paths ["src/newtab"]
+                            :compiler     {:output-to     "resources/release/compiled/newtab.js"
+                                           :output-dir    "resources/release/compiled/newtab"
+                                           :asset-path    "compiled/newtab"
+                                           :main          tempoch.newtab
+                                           :optimizations :advanced
+                                           :elide-asserts true}}
                            :content-script
                            {:source-paths ["src/content_script"]
                             :compiler     {:output-to     "resources/release/compiled/content-script.js"
@@ -110,14 +133,14 @@
                                            :elide-asserts true}}}}}}
 
   :aliases {"dev-build"   ["with-profile" "+unpacked,+unpacked-content-script,+checkouts,+checkouts-content-script" "cljsbuild" "once"]
-            "fig"         ["with-profile" "+unpacked,+figwheel" "figwheel" "background" "popup"]
+            "fig"         ["with-profile" "+unpacked,+figwheel" "figwheel" "background" "popup" "newtab"]
             "content"     ["with-profile" "+unpacked-content-script" "cljsbuild" "auto" "content-script"]
-            "fig-dev"     ["with-profile" "+unpacked,+figwheel,+checkouts" "figwheel" "background" "popup"]
+            "fig-dev"     ["with-profile" "+unpacked,+figwheel,+checkouts" "figwheel" "background" "popup" "newtab"]
             "content-dev" ["with-profile" "+unpacked-content-script,+checkouts-content-script" "cljsbuild" "auto"]
             "devel"       ["with-profile" "+cooper" "do"                                                                      ; for mac only
                            ["shell" "scripts/ensure-checkouts.sh"]
                            ["cooper"]]
             "release"     ["with-profile" "+release" "do"
                            ["clean"]
-                           ["cljsbuild" "once" "background" "popup" "content-script"]]
+                           ["cljsbuild" "once" "background" "popup" "newtab" "content-script"]]
             "package"     ["shell" "scripts/package.sh"]})

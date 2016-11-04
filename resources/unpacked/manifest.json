@@ -3,7 +3,7 @@
    also we allow unsafe eval for figwheel
 */
 {
-  "name": "chromex-sample-dev",
+  "name": "tempoch",
   "version": "0.1.0",
   "browser_action": {
     "default_title": "Show the popup",
@@ -35,7 +35,11 @@
     "persistent": false
   },
   "permissions": [
-    "storage"
+      "storage",
+      "tabs"
   ],
-  "manifest_version": 2
+  "manifest_version": 2,
+  "chrome_url_overrides":  {
+    "newtab": "newtab.html"
+  }
 }

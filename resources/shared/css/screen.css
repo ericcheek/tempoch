@@ -1,0 +1,47 @@
+body {
+  color: #aaa;
+  background: #001E27;
+  font-size: 10px;
+}
+
+.top-flex {
+    display : flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.window-group {
+    padding: 10px;
+    line-height: 2em;
+    /*float: left;*/
+    width: 250px;
+    text-overflow: clip;
+    border: 1px grey solid;
+}
+
+.window-title {
+    padding: 2px;
+    font-size: 14px;
+}
+
+.tab-view {
+    height: 2em;
+    overflow: hidden;
+}
+
+.tab-view.highlighted {
+    font-weight: bold;
+}
+
+.tab-view a {
+    color: #aaa;
+    text-decoration: none;
+}
+
+
+.tab-view:hover {
+    cursor: pointer;
+    height: auto;
+    background: #768800;
+}
