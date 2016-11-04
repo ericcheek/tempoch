@@ -20,6 +20,10 @@ body {
     border: 1px grey solid;
 }
 
+.window-group.active-window {
+    border-color: #768800;
+}
+
 .window-title {
     padding: 2px;
     font-size: 14px;

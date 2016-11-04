@@ -14,10 +14,11 @@
 
 (defn process-message! [message]
   (cond
-    (= (aget message "action") "tab-data")
-    (swap! app-ctx assoc-in [:bg-state :tabs]
+    (= (aget message "action") "window-data")
+    (swap! app-ctx assoc-in [:bg-state :windows]
            (js->clj (aget message "data")
                     :keywordize-keys true))
+    
     :default (log "NEWTAB: got message:" message)
     ))
 

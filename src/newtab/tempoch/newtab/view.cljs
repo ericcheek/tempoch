@@ -1,9 +1,11 @@
 (ns tempoch.newtab.view
   (:require
    [reagent.core :as reagent]
+   [chromex.logging :refer-macros [log info warn error group group-end]]
    [tempoch.newtab.actions :as actions]))
 
 (defn tab-view [ctx tab-info]
+  (log (clj->js tab-info))
   [:div {:key (:id tab-info)
          :class (str
                  "tab-view"
@@ -15,18 +17,17 @@
    [:span {}
     (:title tab-info)]])
 
-(defn window-view [ctx [window-id tabs]]
+(defn window-view [ctx window]
   (into 
-   [:div {:class "window-group" :key window-id}]
-   (map (partial tab-view ctx) tabs)))
+   [:div {:class (str
+                  "window-group"
+                  (if (:focused window) " active-window"))
+          :key (:id window)}]
+   (map (partial tab-view ctx) (:tabs window))))
 
 (defn app-view [ctx]
   (let
-      [tabs-by-window (->>
-                       @ctx
-                       :bg-state
-                       :tabs
-                       (group-by :windowId))]
+      [tabs-by-window (->> @ctx :bg-state :windows)]
     [:div {:class "top-flex"}
      (map (partial window-view ctx) tabs-by-window)]))
 

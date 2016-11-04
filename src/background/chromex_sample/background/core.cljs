@@ -7,23 +7,24 @@
             [chromex.chrome-event-channel :refer [make-chrome-event-channel]]
             [chromex.protocols :refer [post-message! get-sender]]
             [chromex.ext.tabs :as tabs]
+            [chromex.ext.windows :as windows]
             [chromex.ext.runtime :as runtime]
             [chromex-sample.background.storage :refer [test-storage!]]
             [chromex-sample.background.handler :refer [handle-client-requests!]]
             ))
 
-(def tab-data (atom nil))
+(def window-data (atom nil))
 
-(defn describe-tabs []
+(defn describe-windows []
   (go 
     (let
-        [current-tabs (<!
-                       (tabs/query
-                        (clj->js {:windowType "normal"})))
-         tab-data (first current-tabs)]
+        [current-windows (<!
+                          (windows/get-all
+                           (clj->js {:windowTypes ["normal"]
+                                     :populate true})))]
       (clj->js
-       {:action "tab-data"
-        :data tab-data}))))
+       {:action "window-data"
+        :data (first current-windows)}))))
 
 
 (def clients (atom []))
@@ -54,15 +55,15 @@
 (defn handle-client-connection! [client]
   (add-client! client)
   (post-message! client "hello from BACKGROUND PAGE!")
-  (go (post-message! client @tab-data))
+  (go (post-message! client @window-data))
   (run-client-message-loop! client))
 
-(defn broadcast-tab-data! []
+(defn broadcast-window-data! []
   (go 
-    (let [new-tab-data (<! (describe-tabs))]
-      (reset! tab-data new-tab-data)
+    (let [new-window-data (<! (describe-windows))]
+      (reset! window-data new-window-data)
       (doseq [client @clients]
-        (post-message! client new-tab-data)))))
+        (post-message! client new-window-data)))))
 
 
 ; -- main event loop --------------------------------------------------------------------------------------------------------
@@ -74,7 +75,7 @@
       ::runtime/on-connect (apply handle-client-connection! event-args)
       nil)
     ;; todo fire this on appropriate event
-    (broadcast-tab-data!)
+    (broadcast-window-data!)
     ))
 
 (defn run-chrome-event-loop! [chrome-event-channel]
@@ -98,7 +99,7 @@
 (defn init! []
   (log "BACKGROUND: init")
   ;;(test-storage!)
-  (broadcast-tab-data!)
+  (broadcast-window-data!)
   (boot-chrome-event-loop!))
 
 
