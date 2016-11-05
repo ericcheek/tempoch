@@ -17,6 +17,11 @@
                 {:tab-id (:id tab)
                  :window-id (:windowId tab)}))
 
+(defn navigate-tab! [tab query]
+  (send-action! "navigate-tab"
+                {:tab-id (:id tab)
+                 :query query}))
+
 (defn close-tab! [tab]
   (send-action! "close-tab"
                 {:tab-id (:id tab)}))

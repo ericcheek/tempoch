@@ -14,7 +14,7 @@
    (and (or
          (.startsWith q "http://")
          (.startsWith q "https://")) q)
-   (and (some-> q url :host count (> 0)) (str "http://" q))
+   (and (some-> q url :host .-length (> 0)) (str "http://" q))
    (str"https://duckduckgo.com/?q=" (url-encode q))))
 
 
@@ -30,6 +30,12 @@
    :close-tab
    (fn [{tab-id :tab-id}]
      (go (tabs/remove tab-id)))
+
+   :navigate-tab
+   (fn [{tab-id :tab-id query :query}]
+     (go
+       (tabs/update tab-id
+                    #js {"url" (format-query query)})))
 
    :open-tab
    (fn [{window-id :window-id query :query active :active}]

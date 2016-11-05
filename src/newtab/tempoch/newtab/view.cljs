@@ -4,7 +4,7 @@
    [reagent.core :as reagent]
    [tempoch.newtab.actions :as actions]
    [tempoch.newtab.util :refer [classes]]))
-        
+
 
 (defn fa-icon [name]
   [:i {:class (str "fa fa-" name) :aria-hidden true}])
@@ -17,6 +17,21 @@
       (apply action-fn params))}
    (fa-icon icon)])
 
+(defn tab-nav-input [{:keys [on-enter classes initial-value]}]
+  (let [value (reagent/atom (or initial-value ""))]
+    (fn [window]
+      [:input
+       {:type "text"
+        :class classes
+        :on-change #(reset! value (-> % .-target .-value))
+
+        :value @value
+
+        :on-key-press
+        (fn [e]
+          (when (= (.-charCode e) 13)
+            (on-enter e value)))}])))
+
 (defn tab-actions [tab]
   [:div {:class "tab-actions"}
    [:a {:href (:url tab)
@@ -25,42 +40,51 @@
    (icon-button "close" actions/close-tab! tab)])
 
 (defn tab-view [tab]
-   [:div {:key (:id tab)
-          :class (classes
-                  "tab-view"
-                  [(:active tab) "active-tab"])
-          :title (:title tab)
-          :on-click (fn [e]
-                      (.stopPropagation e)
-                      (actions/activate-tab! tab))}
-    [:div
-     (cond
-       (-> tab :mutedInfo :muted) (fa-icon "volume-off")
-       (-> tab :audible) (fa-icon "volume-up")
-       :default nil)
-     (if (-> tab :incognito) (fa-icon "user-secret"))
-     [:span {:class (classes [(:incognito tab) "incognito"])}
-      (:title tab)]]
-    (tab-actions tab)])
+  (let [tab-state
+        (reagent/atom {:editing false})]
+    (fn [tab]
+      [:div
+       {:class (classes
+                "tab-view"
+                [(:active tab) "active-tab"])
+        :title (:title tab)
+        :on-click
+        (fn [e]
+          (cond
+            (:editing @tab-state) nil
+            (.-shiftKey e) (do
+                             (.stopPropagation e)
+                             (swap! tab-state assoc :editing true))
+            :default (actions/activate-tab! tab)))
+        }
+       [:div
+        (cond
+          (-> tab :mutedInfo :muted) (fa-icon "volume-off")
+          (-> tab :audible) (fa-icon "volume-up")
+          :default nil)
+        (if (-> tab :incognito) (fa-icon "user-secret"))
+        (if (-> @tab-state :editing)
+          [tab-nav-input
+           {:on-enter (fn [e value]
+                        (when (not= @value (:url tab))
+                          (actions/navigate-tab! tab @value))
+                        (swap! tab-state assoc :editing false))
+            :initial-value (:url tab)}]
+           [:span {:class (classes [(:incognito tab) "incognito"])}
+            (:title tab)])]
+       (tab-actions tab)])))
 
-(defn new-tab-input [window]
-  (let [vatom (reagent/atom "")]
-    (fn [window]
-      [:input {:type "text"
-               :class "new-tab-input"
-               :on-change #(reset! vatom (-> % .-target .-value))
-               
-               :value @vatom
-           
-               :on-key-press
-               (fn [e]
-                 (when (= (.-charCode e) 13)
-                   (actions/open-tab!
-                    window
-                    (-> e .-target .-value)
-                    (not (.-shiftKey e)))
-                   (reset! vatom "")))
-               }])))
+
+
+(defn new-tab-input [{:keys [window]}]
+  [tab-nav-input
+   {:on-enter (fn [e value]
+                (actions/open-tab!
+                 window
+                 @value
+                 (not (.-shiftKey e)))
+                (reset! value ""))
+    :classes "new-tab-input"}])
 
 
 (defn window-actions [window]
@@ -83,9 +107,10 @@
     (if (:incognito window) [:span {:style {:color "red"}} "incognito"])
     (if (-> window :type (= "devtools")) [:span {:style {:color "green"}} "devtools"])]
    (window-actions window)
-   (map tab-view (:tabs window))
-   [new-tab-input window]
-   ])
+   (map
+    (fn [tab] ^{:key (:id tab)} [tab-view tab])
+    (:tabs window))
+   [new-tab-input {:window window}]])
 
 
 
