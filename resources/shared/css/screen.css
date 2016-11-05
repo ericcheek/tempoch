@@ -2,6 +2,9 @@ body {
   color: #aaa;
   background: #001E27;
   font-size: 10px;
+  letter-spacing: 1px;
+  padding: 1px;
+  margin: 0px;
 }
 
 .top-flex {
@@ -9,12 +12,25 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     width: 100%;
+    padding: 1px;
+}
+
+button {
+    border: 0;
+    background: none;
+    outline: 0;
+    cursor: pointer;
+}
+
+.fa-volume-up, .fa-volume-off, .fa-user-secret {
+    padding-right: 3px;
 }
 
 .window-group {
-    padding: 10px;
+    position: relative;
+    padding: 5px;
+    padding-top: 15px;
     line-height: 2em;
-    /*float: left;*/
     width: 250px;
     text-overflow: clip;
     border: 1px grey solid;
@@ -27,6 +43,23 @@ body {
 .window-title {
     padding: 2px;
     font-size: 14px;
+
+}
+
+.window-group:hover .window-actions {
+    display: block;
+}
+
+.window-actions {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    padding: 2px;
+    display: none;
+}
+
+.window-actions .fa {
+    color: #aaa !important;
 }
 
 .tab-view {
@@ -34,8 +67,16 @@ body {
     overflow: hidden;
 }
 
-.tab-view.highlighted {
+.tab-view.active-tab {
     font-weight: bold;
+}
+
+.tab-view .incognito {
+    opacity: 0;
+}
+
+.window-group:hover .incognito {
+    opacity: 1;
 }
 
 .tab-view a {
@@ -46,6 +87,5 @@ body {
 
 .tab-view:hover {
     cursor: pointer;
-    height: auto;
     background: #768800;
 }

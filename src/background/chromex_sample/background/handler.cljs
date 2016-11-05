@@ -12,23 +12,37 @@
 (defn activate-tab [{tab-id :tab-id window-id :window-id}]
   (go
     (windows/update window-id #js {"focused" true})
-    (tabs/update tab-id #js {"highlighted" true})))
+    (when (> tab-id -1)
+      (tabs/update tab-id #js {"active" true}))))
 
 (defn close-tab [{tab-id :tab-id}]
-  (go
-    (tabs/close tab-id)))
+  (go (tabs/remove tab-id)))
 
 (defn move-tab [{tab-id :tab-id window-id :window-id position :position}] 
   )
 
+(defn minimize-window [{window-id :window-id}]
+  (go (windows/update window-id
+                      #js {"state" "minimized"})))
+
+(defn show-window [{window-id :window-id}]
+  (go (windows/update window-id
+                      #js {"state" "normal"})))
+
+(defn close-window [{window-id :window-id}]
+  (go (windows/remove window-id)))
+                    
+
 (defn handle-client-requests! [message]
   (let [msg (js->clj message :keywordize-keys true)
-        ;;action (:action msg)
-        ;;data (:data msg)
+        action (:action msg)
+        params (:params msg)
         ]
-    (condp = (:action msg)
-      nil (log msg)
-      "activate-tab" (activate-tab (:data msg))
+    (condp = action
+      "activate-tab" (activate-tab params)
+      "minimize-window" (minimize-window params)
+      "close-window" (close-window params)
+      "show-window" (show-window params)
       )))
     
   

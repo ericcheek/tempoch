@@ -4,18 +4,15 @@
             [chromex.logging :refer-macros [log info warn error group group-end]]
             [chromex.protocols :refer [post-message!]]
             [chromex.ext.runtime :as runtime :refer-macros [connect]]
-            [reagent.core :as reagent]
+            [tempoch.newtab.state :as state]
             [tempoch.newtab.view :as view]))
-
-(defonce app-ctx
-  (reagent/atom {}))
 
 ; -- a message loop ---------------------------------------------------------------------------------------------------------
 
 (defn process-message! [message]
   (cond
     (= (aget message "action") "window-data")
-    (swap! app-ctx assoc-in [:bg-state :windows]
+    (swap! state/app-ctx assoc-in [:bg-state :windows]
            (js->clj (aget message "data")
                     :keywordize-keys true))
     
@@ -28,19 +25,18 @@
     (when-let [message (<! message-channel)]
       (process-message! message)
       (recur))
-    (log "NEWTAB: leaving message loop")
-    (swap! app-ctx assoc :bg-port nil)))
+    (log "NEWTAB: leaving message loop")))
 
 (defn connect-to-background-page! []
   (let [background-port (runtime/connect)]
-    (swap! app-ctx assoc :bg-port background-port)
-    (post-message! background-port "hello from NEWTAB!")
+    (swap! state/app-ctx assoc :bg-port background-port)
     (run-message-loop! background-port)))
+    
 
-                                        ; -- main entry point -------------------------------------------------------------------------------------------------------
+; -- main entry point -------------------------------------------------------------------------------------------------------
 
 
 (defn init! []
   (log "NEWTAB: init")
   (connect-to-background-page!)
-  (view/render app-ctx))
+  (view/render state/app-ctx))

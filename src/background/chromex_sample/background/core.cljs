@@ -20,7 +20,7 @@
     (let
         [current-windows (<!
                           (windows/get-all
-                           (clj->js {:windowTypes ["normal"]
+                           (clj->js {:windowTypes ["normal" "devtools"]
                                      :populate true})))]
       (clj->js
        {:action "window-data"
@@ -48,6 +48,7 @@
       (handle-client-requests! message)
       ;;(log "BACKGROUND: got client message:" message "from" (get-sender client))
       (recur))
+    (log "Disconnecting client " (get-sender client))
     (remove-client! client)))
 
 ; -- event handlers ---------------------------------------------------------------------------------------------------------
@@ -63,20 +64,30 @@
     (let [new-window-data (<! (describe-windows))]
       (reset! window-data new-window-data)
       (doseq [client @clients]
-        (post-message! client new-window-data)))))
+        (try
+          (post-message! client new-window-data)
+          (catch js/Error e (remove-client! client)))))))
 
 
 ; -- main event loop --------------------------------------------------------------------------------------------------------
 
 (defn process-chrome-event [event-num event]
-  (log (gstring/format "BACKGROUND: got chrome event (%05d)" event-num) event)
   (let [[event-id event-args] event]
-    (case event-id
-      ::runtime/on-connect (apply handle-client-connection! event-args)
-      nil)
-    ;; todo fire this on appropriate event
-    (broadcast-window-data!)
-    ))
+    (when (= event-id ::runtime/on-connect)
+      (apply handle-client-connection! event-args))
+    (when (contains?
+           #{::tabs/on-created
+             ::tabs/on-updated
+             ::tabs/on-moved
+             ::tabs/on-active-changed
+             ::tabs/on-highlight-changed
+             ::tabs/on-removed
+             ::windows/on-updated
+             ::windows/on-created
+             ::windows/on-removed
+             ::windows/on-focus-changed}
+           event-id)
+      (broadcast-window-data!))))
 
 (defn run-chrome-event-loop! [chrome-event-channel]
   (log "BACKGROUND: starting main event loop...")
@@ -89,6 +100,7 @@
 (defn boot-chrome-event-loop! []
   (let [chrome-event-channel (make-chrome-event-channel (chan))]
     (tabs/tap-all-events chrome-event-channel)
+    (windows/tap-all-events chrome-event-channel)
     (runtime/tap-all-events chrome-event-channel)
     (run-chrome-event-loop! chrome-event-channel)))
 
