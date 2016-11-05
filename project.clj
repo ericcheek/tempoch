@@ -5,6 +5,7 @@
                  [binaryage/chromex "0.5.1"]
                  [binaryage/devtools "0.8.2"]
                  [reagent "0.5.1"]
+                 [com.cemerick/url "0.1.1"]
                  [garden "1.3.0"]
                  [figwheel "0.5.7"]
                  [com.cemerick/piggieback "0.2.1"]

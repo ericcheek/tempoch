@@ -12,21 +12,31 @@
     {:action action
      :params params})))
     
-(defn activate-tab! [tab-info]
+(defn activate-tab! [tab]
   (send-action! "activate-tab"
-                {:tab-id (:id tab-info)
-                 :window-id (:windowId tab-info)}))
+                {:tab-id (:id tab)
+                 :window-id (:windowId tab)}))
 
-(defn minimize-window! [window-id]
+(defn close-tab! [tab]
+  (send-action! "close-tab"
+                {:tab-id (:id tab)}))
+
+(defn open-tab! [window query switch-to]
+  (send-action! "open-tab"
+                {:window-id (:id window)
+                 :query query
+                 :active switch-to}))
+
+(defn minimize-window! [window]
   (send-action! "minimize-window"
-                {:window-id window-id}))
+                {:window-id (:id window)}))
 
-(defn show-window! [window-id]
+(defn show-window! [window]
   (send-action! "show-window"
-                {:window-id window-id}))
+                {:window-id (:id window)}))
 
 
-(defn close-window! [window-id]
+(defn close-window! [window]
   (send-action! "close-window"
-                {:window-id window-id}))
+                {:window-id (:id window)}))
   
