@@ -10,10 +10,8 @@
             [chromex.ext.windows :as windows]
             [chromex.ext.runtime :as runtime]
             [tempoch.background.storage :refer [test-storage!]]
-            [tempoch.background.handler :refer [handle-client-requests!]]
-            ))
-
-(def window-data (atom nil))
+            [tempoch.background.state :as state]
+            [tempoch.background.handler :refer [handle-client-requests!]]))
 
 (defn describe-windows []
   (go 
@@ -22,14 +20,13 @@
                           (windows/get-all
                            (clj->js {:windowTypes ["normal" "devtools"]
                                      :populate true})))]
-      (clj->js
-       {:action "window-data"
-        :data (first current-windows)}))))
+      (first current-windows))))
+
 
 
 (def clients (atom []))
 
-; -- clients manipulation ---------------------------------------------------------------------------------------------------
+;; -- clients manipulation ---------------------------------------------------------------------------------------------------
 
 (defn add-client! [client]
   (log "BACKGROUND: client connected" (get-sender client))
@@ -40,7 +37,7 @@
   (let [remove-item (fn [coll item] (remove #(identical? item %) coll))]
     (swap! clients remove-item client)))
 
-; -- client event loop ------------------------------------------------------------------------------------------------------
+;; -- client event loop ------------------------------------------------------------------------------------------------------
 
 (defn run-client-message-loop! [client]
   (go-loop []
@@ -51,25 +48,44 @@
     (log "Disconnecting client " (get-sender client))
     (remove-client! client)))
 
-; -- event handlers ---------------------------------------------------------------------------------------------------------
+;; -- event handlers ---------------------------------------------------------------------------------------------------------
+
+(defn send-context! [client ctx]
+  (post-message! client
+                 (clj->js
+                  {:action "set-context"
+                   :params ctx})))
+
+(defn context-broadcaster [key ref old-ctx new-ctx]
+  (go
+    (doseq [client @clients]
+      (try
+        (send-context! client new-ctx)
+        (catch js/Error e (remove-client! client))))))
+
 
 (defn handle-client-connection! [client]
   (add-client! client)
   (post-message! client "hello from BACKGROUND PAGE!")
-  (go (post-message! client @window-data))
+  (go (send-context! client @state/ctx))
   (run-client-message-loop! client))
 
-(defn broadcast-window-data! []
-  (go 
-    (let [new-window-data (<! (describe-windows))]
-      (reset! window-data new-window-data)
-      (doseq [client @clients]
-        (try
-          (post-message! client new-window-data)
-          (catch js/Error e (remove-client! client)))))))
+(defn update-window-data! []
+  (go
+    (let
+        [windows (->>
+                  (js->clj
+                   (<! (describe-windows))
+                   :keywordize-keys true)
+                  (map (fn [w] [(:id w) w]))
+                  (into {}))]
+    (swap! state/ctx
+           assoc-in
+           [:chrome :windows]
+           windows))))
 
 
-; -- main event loop --------------------------------------------------------------------------------------------------------
+;; -- main event loop --------------------------------------------------------------------------------------------------------
 
 (defn process-chrome-event [event-num event]
   (let [[event-id event-args] event]
@@ -87,7 +103,7 @@
              ::windows/on-removed
              ::windows/on-focus-changed}
            event-id)
-      (broadcast-window-data!))))
+      (update-window-data!))))
 
 (defn run-chrome-event-loop! [chrome-event-channel]
   (log "BACKGROUND: starting main event loop...")
@@ -102,7 +118,8 @@
     (tabs/tap-all-events chrome-event-channel)
     (windows/tap-all-events chrome-event-channel)
     (runtime/tap-all-events chrome-event-channel)
-    (run-chrome-event-loop! chrome-event-channel)))
+    (run-chrome-event-loop! chrome-event-channel)
+    (add-watch state/ctx :context-broadcaster context-broadcaster)))
 
 ; -- main entry point -------------------------------------------------------------------------------------------------------
 
@@ -111,7 +128,7 @@
 (defn init! []
   (log "BACKGROUND: init")
   ;;(test-storage!)
-  (broadcast-window-data!)
+  (update-window-data!)
   (boot-chrome-event-loop!))
 
 

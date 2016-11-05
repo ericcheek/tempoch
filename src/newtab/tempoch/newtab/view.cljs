@@ -70,7 +70,7 @@
                           (actions/navigate-tab! tab @value))
                         (swap! tab-state assoc :editing false))
             :initial-value (:url tab)}]
-           [:span {:class (classes [(:incognito tab) "incognito"])}
+           [:span {:class (classes "tab-title" [(:incognito tab) "incognito"])}
             (:title tab)])]
        (tab-actions tab)])))
 
@@ -86,13 +86,19 @@
                 (reset! value ""))
     :classes "new-tab-input"}])
 
+(defn should-mask [window]
+  (-> window (:masked (:incognito window))))
 
 (defn window-actions [window]
   (let
-      [button (fn [icon action-fn]
-                (icon-button icon action-fn window))]
+      [button (fn [icon action-fn & params]
+                (apply
+                 icon-button icon action-fn window params))]
 
     [:div {:class "window-actions"}
+     (if (should-mask window)
+       (button "eye" actions/set-window-masked! false)
+       (button "eye-slash" actions/set-window-masked! true))
      (if (-> window :state (= "minimized"))
        (button "window-restore" actions/show-window!)
        (button "window-minimize" actions/minimize-window!))
@@ -101,7 +107,8 @@
 
 (defn window-view [window]
   [:div {:class (classes "window-view"
-                         [(:focused window) "active-window"])
+                         [(:focused window) "active-window"]
+                         [(should-mask window) "masked-details"])
          :key (:id window)}
    [:div {:class "window-title"}
     (if (:incognito window) [:span {:style {:color "red"}} "incognito"])
@@ -110,13 +117,14 @@
    (map
     (fn [tab] ^{:key (:id tab)} [tab-view tab])
     (:tabs window))
-   [new-tab-input {:window window}]])
-
+   (if (-> window :type (= "normal"))
+     [new-tab-input {:window window}])])
 
 
 (defn search-box [ctx]
   [:div {:class "search-box"}
    [:input {:type "text"}]])
+
 
 (defn create-window-button [is-incognito]
   [:button
@@ -129,14 +137,21 @@
 
 (defn app-view [ctx]
   (let
-      [tabs-by-window (->> @ctx :bg-state :windows)]
+      [chrome-windows (->> @ctx :bg-state :chrome :windows)
+       transient-windows (->> @ctx :bg-state :transient :windows)
+       windows (->>
+                chrome-windows
+                (map (fn [[k w]]
+                       (merge w (get transient-windows k))))
+                (sort-by :type)
+                reverse)]
     [:div
      ;;(search-box ctx)
      [:div
       [create-window-button false]
       [create-window-button true]]
      [:div {:class "top-flex"}
-      (map window-view tabs-by-window)]]))
+      (map window-view windows)]]))
 
 
 (defn render [ctx]

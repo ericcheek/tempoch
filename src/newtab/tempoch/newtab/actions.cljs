@@ -39,6 +39,11 @@
   (send-action! "minimize-window"
                 {:window-id (:id window)}))
 
+(defn set-window-masked! [window masked]
+  (send-action! "window-masked"
+                {:window-id (:id window)
+                 :masked masked}))
+
 (defn show-window! [window]
   (send-action! "show-window"
                 {:window-id (:id window)}))

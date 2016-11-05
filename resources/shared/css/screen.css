@@ -46,12 +46,12 @@ button {
     background-color: #003f52;
 }
 
-.window-view:hover .incognito {
-    opacity: 1;
+.window-view.masked-details:hover .tab-title {
+    opacity: 0.6;
 }
 
-.window-view .incognito {
-    opacity: 0;
+.window-view.masked-details .tab-title {
+    opacity: 0.1;
 }
 
 .window-view:hover .window-actions {

@@ -7,17 +7,15 @@
             [tempoch.newtab.state :as state]
             [tempoch.newtab.view :as view]))
 
-; -- a message loop ---------------------------------------------------------------------------------------------------------
-
-(defn process-message! [message]
+;; -- a message loop ---------------------------------------------------------------------------------------------------------
+(defn process-message! [message]  
   (cond
-    (= (aget message "action") "window-data")
-    (swap! state/app-ctx assoc-in [:bg-state :windows]
-           (js->clj (aget message "data")
+    (= (aget message "action") "set-context")
+    (swap! state/app-ctx assoc-in [:bg-state]
+           (js->clj (aget message "params")
                     :keywordize-keys true))
     
-    :default (log "NEWTAB: got message:" message)
-    ))
+    :default (log "NEWTAB: got message:" message)))
 
 (defn run-message-loop! [message-channel]
   (log "NEWTAB: starting message loop...")
@@ -33,7 +31,7 @@
     (run-message-loop! background-port)))
     
 
-; -- main entry point -------------------------------------------------------------------------------------------------------
+;; -- main entry point -------------------------------------------------------------------------------------------------------
 
 
 (defn init! []
