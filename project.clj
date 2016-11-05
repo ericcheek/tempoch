@@ -37,7 +37,7 @@
                                            :output-dir    "resources/unpacked/compiled/background"
                                            :asset-path    "compiled/background"
                                            :preloads      [devtools.preload]
-                                           :main          chromex-sample.background
+                                           :main          tempoch.background
                                            :optimizations :none
                                            :source-map    true}}
                            :newtab
@@ -57,7 +57,7 @@
                                            :output-dir    "resources/unpacked/compiled/popup"
                                            :asset-path    "compiled/popup"
                                            :preloads      [devtools.preload]
-                                           :main          chromex-sample.popup
+                                           :main          tempoch.popup
                                            :optimizations :none
                                            :source-map    true}}}}}
              :unpacked-content-script
@@ -68,7 +68,7 @@
                                            :output-dir    "resources/unpacked/compiled/content-script"
                                            :asset-path    "compiled/content-script"
                                            :preloads      [devtools.preload]
-                                           :main          chromex-sample.content-script
+                                           :main          tempoch.content-script
                                            ;:optimizations :whitespace                                                         ; content scripts cannot do eval / load script dynamically
                                            :optimizations :advanced                                                           ; let's use advanced build with pseudo-names for now, there seems to be a bug in deps ordering under :whitespace mode
                                            :pseudo-names  true
@@ -104,7 +104,7 @@
                             :compiler     {:output-to     "resources/release/compiled/background.js"
                                            :output-dir    "resources/release/compiled/background"
                                            :asset-path    "compiled/background"
-                                           :main          chromex-sample.background
+                                           :main          tempoch.background
                                            :optimizations :advanced
                                            :elide-asserts true}}
                            :popup
@@ -112,7 +112,7 @@
                             :compiler     {:output-to     "resources/release/compiled/popup.js"
                                            :output-dir    "resources/release/compiled/popup"
                                            :asset-path    "compiled/popup"
-                                           :main          chromex-sample.popup
+                                           :main          tempoch.popup
                                            :optimizations :advanced
                                            :elide-asserts true}}
                            :newtab
@@ -128,7 +128,7 @@
                             :compiler     {:output-to     "resources/release/compiled/content-script.js"
                                            :output-dir    "resources/release/compiled/content-script"
                                            :asset-path    "compiled/content-script"
-                                           :main          chromex-sample.content-script
+                                           :main          tempoch.content-script
                                            :optimizations :advanced
                                            :elide-asserts true}}}}}}
 

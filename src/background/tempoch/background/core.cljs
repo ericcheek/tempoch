@@ -1,4 +1,4 @@
-(ns chromex-sample.background.core
+(ns tempoch.background.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [goog.string :as gstring]
             [goog.string.format]
@@ -9,8 +9,8 @@
             [chromex.ext.tabs :as tabs]
             [chromex.ext.windows :as windows]
             [chromex.ext.runtime :as runtime]
-            [chromex-sample.background.storage :refer [test-storage!]]
-            [chromex-sample.background.handler :refer [handle-client-requests!]]
+            [tempoch.background.storage :refer [test-storage!]]
+            [tempoch.background.handler :refer [handle-client-requests!]]
             ))
 
 (def window-data (atom nil))

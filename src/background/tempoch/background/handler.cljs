@@ -1,4 +1,4 @@
-(ns chromex-sample.background.handler
+(ns tempoch.background.handler
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [goog.string :as gstring]
             [goog.string.format]
