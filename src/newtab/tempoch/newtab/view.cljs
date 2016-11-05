@@ -93,11 +93,23 @@
   [:div {:class "search-box"}
    [:input {:type "text"}]])
 
+(defn create-window-button [is-incognito]
+  [:button
+   {:on-click (fn [e]
+                (actions/open-window!
+                 (-> e .-shiftKey not)
+                 is-incognito))}
+   (if is-incognito
+     "+incognito" "+window")])
+
 (defn app-view [ctx]
   (let
       [tabs-by-window (->> @ctx :bg-state :windows)]
     [:div
      ;;(search-box ctx)
+     [:div
+      [create-window-button false]
+      [create-window-button true]]
      [:div {:class "top-flex"}
       (map window-view tabs-by-window)]]))
 

@@ -41,15 +41,24 @@
    :move-tab (fn [{tab-id :tab-id window-id :window-id position :position}]
                )
 
-   :minimize-window (fn[{window-id :window-id}]
+   :open-window
+   (fn [{active :active incognito :incognito}]
+     (go (windows/create
+          #js{"incognito" incognito
+              "state" (if active "normal" "minimized")})))
+
+   :minimize-window
+   (fn[{window-id :window-id}]
      (go (windows/update window-id
                          #js {"state" "minimized"})))
 
-   :show-window (fn[{window-id :window-id}]
+   :show-window
+   (fn[{window-id :window-id}]
      (go (windows/update window-id
                          #js {"state" "normal"})))
 
-   :close-window (fn[{window-id :window-id}]
+   :close-window
+   (fn[{window-id :window-id}]
      (go (windows/remove window-id)))
    
    })

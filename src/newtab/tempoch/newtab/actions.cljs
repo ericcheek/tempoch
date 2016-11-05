@@ -27,6 +27,9 @@
                  :query query
                  :active switch-to}))
 
+(defn open-window! [active incognito]
+  (send-action! "open-window" {:active active :incognito incognito}))
+
 (defn minimize-window! [window]
   (send-action! "minimize-window"
                 {:window-id (:id window)}))

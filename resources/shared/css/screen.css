@@ -26,6 +26,7 @@ button {
     background: none;
     outline: 0;
     cursor: pointer;
+    color: inherit;
 }
 
 .fa-volume-up, .fa-volume-off, .fa-user-secret {
@@ -69,9 +70,6 @@ button {
     display: none;
 }
 
-.window-actions .fa, .tab-actions .fa {
-    color: #ddd !important;
-}
 
 .new-tab-input {
     opacity: 0;
