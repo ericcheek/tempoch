@@ -33,9 +33,9 @@
           (when (= (.-charCode e) 13)
             (on-enter e value)))}])))
 
-(defn drop-zone [{:keys [drop-fn drop-class]} children]
+(defn drop-zone [{:keys [drop-fn drop-class]}]
   (let [activated (reagent/atom false)]
-    (fn []
+    (fn [_ children]
       [:div.drop-zone
        {:on-drag-enter
         (fn [e]
@@ -57,8 +57,8 @@
         :class (classes [@activated drop-class])}
        children])))
 
-(defn drag-source [{:keys [selection]} children]
-  (fn []
+(defn drag-source [{:keys [selection]}]
+  (fn [_ children]
     [:div
      {:draggable true
       :on-drag-start
@@ -144,27 +144,32 @@
 
 
 (defn window-view [window]
-  [:div {:class (classes "window-view"
-                         [(:focused window) "active-window"]
-                         [(should-mask window) "masked-details"])
-         :key (:id window)}
-   [:div {:class "window-title"}
-    (if (:incognito window) [:span {:style {:color "red"}} "incognito"])
-    (if (-> window :type (= "devtools")) [:span {:style {:color "green"}} "devtools"])]
-   (window-actions window)
-   (map
-    (fn [tab] ^{:key (:id tab)}
-      [drop-zone
-       {:drop-fn (partial actions/move-tabs! window (:index tab))
-        :drop-class "tab-drop-ready"}
-       [drag-source {:selection (:id tab)}
-        [tab-view tab]]])
-    (:tabs window))
-   (if (-> window :type (= "normal"))
-     [drop-zone
-      {:drop-fn (partial actions/move-tabs! window -1)
-       :drop-class "tab-drop-ready"}
-      [new-tab-input {:window window}]])])
+  (let
+      [is-devtools (-> window :type (= "devtools"))]
+    [:div {:class (classes "window-view"
+                           [(:focused window) "active-window"]
+                           [(should-mask window) "masked-details"])
+           :key (:id window)}
+     [:div {:class "window-title"}
+      (if (:incognito window) [:span {:style {:color "red"}} "incognito"])
+      (if is-devtools [:span {:style {:color "green"}} "devtools"])]
+     (window-actions window)
+     (if is-devtools
+       [tab-view (-> window :tabs first)] ;; assuming one tab for now       
+       (map
+        (fn [tab] 
+          ^{:key (:id tab)}
+          [drop-zone
+           {:drop-fn (partial actions/move-tabs! window (:index tab))
+            :drop-class "tab-drop-ready"}
+           [drag-source {:selection (:id tab)}
+            [tab-view tab]]])
+        (:tabs window)))
+      (if (not is-devtools)
+        [drop-zone
+         {:drop-fn (partial actions/move-tabs! window -1)
+          :drop-class "tab-drop-ready"}
+         [new-tab-input {:window window}]])]))
 
 
 (defn search-box [ctx]
