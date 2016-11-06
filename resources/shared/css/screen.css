@@ -82,7 +82,7 @@ button {
 
 .new-tab-input {
     opacity: 0;
-    width: 75%;
+    width: 100%;
 }
 
 .new-tab-input:hover,
