@@ -3,6 +3,7 @@
    [chromex.logging :refer-macros [log info warn error group group-end]]
    [reagent.core :as reagent]
    [tempoch.newtab.actions :as actions]
+   [tempoch.newtab.state :as state]
    [tempoch.newtab.util :refer [classes]]))
 
 
@@ -31,6 +32,42 @@
         (fn [e]
           (when (= (.-charCode e) 13)
             (on-enter e value)))}])))
+
+(defn drop-zone [{:keys [drop-fn drop-class]} children]
+  (let [activated (reagent/atom false)]
+    (fn []
+      [:div.drop-zone
+       {:on-drag-enter
+        (fn [e]
+          (reset! activated true)
+          (swap! state/local-ctx assoc-in [:drag-state :drop-fn] drop-fn))
+        
+        :on-drag-over
+        (fn [e] (.preventDefault e))
+        
+        :on-drag-leave
+        (fn [e]
+          (reset! activated false))
+        
+        :on-drop (fn [e]
+                   (let [{:keys [drop-fn selection]} (get @state/local-ctx :drag-state)]
+                     (when drop-fn
+                       (drop-fn selection))
+                     (reset! activated false)))
+        :class (classes [@activated drop-class])}
+       children])))
+
+(defn drag-source [{:keys [selection]} children]
+  (fn []
+    [:div
+     {:draggable true
+      :on-drag-start
+      (fn [e]
+        (swap! state/local-ctx assoc :drag-state {:selection selection}))
+      :on-drag-end
+      (fn [e]
+        (swap! state/local-ctx assoc :drag-state nil))}
+     children]))
 
 (defn tab-actions [tab]
   [:div {:class "tab-actions"}
@@ -70,8 +107,8 @@
                           (actions/navigate-tab! tab @value))
                         (swap! tab-state assoc :editing false))
             :initial-value (:url tab)}]
-           [:span {:class (classes "tab-title" [(:incognito tab) "incognito"])}
-            (:title tab)])]
+          [:span {:class (classes "tab-title" [(:incognito tab) "incognito"])}
+           (:title tab)])]
        (tab-actions tab)])))
 
 
@@ -105,6 +142,7 @@
      (button "close" actions/close-window!)]))
 
 
+
 (defn window-view [window]
   [:div {:class (classes "window-view"
                          [(:focused window) "active-window"]
@@ -115,10 +153,18 @@
     (if (-> window :type (= "devtools")) [:span {:style {:color "green"}} "devtools"])]
    (window-actions window)
    (map
-    (fn [tab] ^{:key (:id tab)} [tab-view tab])
+    (fn [tab] ^{:key (:id tab)}
+      [drop-zone
+       {:drop-fn (partial actions/move-tabs! window (:index tab))
+        :drop-class "tab-drop-ready"}
+       [drag-source {:selection (:id tab)}
+        [tab-view tab]]])
     (:tabs window))
    (if (-> window :type (= "normal"))
-     [new-tab-input {:window window}])])
+     [drop-zone
+      {:drop-fn (partial actions/move-tabs! window -1)
+       :drop-class "tab-drop-ready"}
+      [new-tab-input {:window window}]])])
 
 
 (defn search-box [ctx]
@@ -135,6 +181,7 @@
    (if is-incognito
      "+incognito" "+window")])
 
+
 (defn app-view [ctx]
   (let
       [chrome-windows (->> @ctx :bg-state :chrome :windows)
@@ -143,9 +190,11 @@
                 chrome-windows
                 (map (fn [[k w]]
                        (merge w (get transient-windows k))))
-                (sort-by :type)
+                (sort-by #(vector (-> % :type (= "normal")) (:id %)))
                 reverse)]
+   
     [:div
+     {:class (classes [(:drag-state @state/local-ctx) "drag-active"])}
      ;;(search-box ctx)
      [:div
       [create-window-button false]

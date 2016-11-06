@@ -1,3 +1,12 @@
+* {
+-webkit-user-select: none; /* Chrome/Safari */
+}
+
+/* must disable pointer events inside of drop zones during drag */
+.drag-active .drop-zone * {
+    pointer-events: none;
+}
+
 body {
   color: #aaa;
   background: #001E27;
@@ -85,6 +94,13 @@ button {
     height: 2em;
     overflow: hidden;
     position: relative;
+}
+
+
+
+.tab-drop-ready {
+    border-top: 2px solid #768800 !important;
+    
 }
 
 .tab-view.active-tab {

@@ -4,7 +4,7 @@
    [chromex.logging :refer-macros [log info warn error group group-end]]))
 
 (defonce local-ctx
-  (reagent/atom {}))
+  (reagent/atom {:drag-state nil}))
 
 (defonce app-ctx
   (reagent/atom {}))

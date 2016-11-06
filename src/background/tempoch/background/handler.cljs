@@ -45,9 +45,12 @@
                "url" (format-query query)
                "active" active})))
 
-   :move-tab
-   (fn [{:keys [tab-id window-id position]}]
-     )
+   :move-tabs
+   (fn [{:keys [window-id index tabs]}]
+     (go (tabs/move
+          tabs
+          #js {"windowId" window-id
+               "index" index})))
 
    :open-window
    (fn [{:keys [active incognito]}]
@@ -59,11 +62,7 @@
    (fn [{:keys [window-id masked]}]
      (swap! state/ctx
             assoc-in [:transient :windows window-id :masked]
-            masked)
-     (log
-      (clj->js
-       (get-in @state/ctx [:transient :windows])))
-     )
+            masked))
 
    :minimize-window
    (fn[{:keys [window-id]}]

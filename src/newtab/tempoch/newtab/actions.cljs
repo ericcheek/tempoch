@@ -32,6 +32,12 @@
                  :query query
                  :active switch-to}))
 
+(defn move-tabs! [window index tab-or-tab-ids]
+  (send-action! "move-tabs"
+                {:window-id (:id window)
+                 :index index
+                 :tabs tab-or-tab-ids}))
+
 (defn open-window! [active incognito]
   (send-action! "open-window" {:active active :incognito incognito}))
 

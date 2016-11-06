@@ -97,8 +97,10 @@
              ::tabs/on-moved
              ::tabs/on-active-changed
              ::tabs/on-highlight-changed
-             ::tabs/on-removed
+             ::tabs/on-removed           
              ::windows/on-updated
+             ::tabs/on-detached
+             ::tabs/on-attached
              ::windows/on-created
              ::windows/on-removed
              ::windows/on-focus-changed}
