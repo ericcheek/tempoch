@@ -113,8 +113,7 @@ button {
     text-decoration: none;
 }
 
-
-.tab-view:hover {
+.tab-view:hover, .tab-view.selected-tab {
     cursor: pointer;
     background: #768800;
 }

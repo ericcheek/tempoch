@@ -4,7 +4,7 @@
    [reagent.core :as reagent]
    [tempoch.newtab.actions :as actions]
    [tempoch.newtab.state :as state]
-   [tempoch.newtab.util :refer [classes]]))
+   [tempoch.newtab.util :refer [classes] :as util]))
 
 
 (defn fa-icon [name]
@@ -40,34 +40,38 @@
        {:on-drag-enter
         (fn [e]
           (reset! activated true)
-          (swap! state/local-ctx assoc-in [:drag-state :drop-fn] drop-fn))
-        
+          (state/set-drop-fn! drop-fn))
+
         :on-drag-over
         (fn [e] (.preventDefault e))
-        
+
         :on-drag-leave
         (fn [e]
           (reset! activated false))
-        
-        :on-drop (fn [e]
-                   (let [{:keys [drop-fn selection]} (get @state/local-ctx :drag-state)]
-                     (when drop-fn
-                       (drop-fn selection))
-                     (reset! activated false)))
+
+        :on-drop
+        (fn [e]
+          (let [{:keys [drop-fn selection]} (state/get-drag-state)]
+            (when drop-fn
+              (drop-fn selection))
+            (reset! activated false)))
+
         :class (classes [@activated drop-class])}
        children])))
 
 (defn drag-source [{:keys [selection]}]
-  (fn [_ children]
+  (fn [{:keys [selection]} children]
     [:div
      {:draggable true
+
       :on-drag-start
       (fn [e]
-        (swap! state/local-ctx assoc :drag-state {:selection selection}))
+        (state/set-drag-selection! selection))
+
       :on-drag-end
-      (fn [e]
-        (swap! state/local-ctx assoc :drag-state nil))}
-     children]))
+        (fn [e]
+          (state/clear-drag-state!))}
+      children]))
 
 (defn tab-actions [tab]
   [:div {:class "tab-actions"}
@@ -83,15 +87,21 @@
       [:div
        {:class (classes
                 "tab-view"
-                [(:active tab) "active-tab"])
+                [(:active tab) "active-tab"]
+                [(state/is-tab-selected? tab) "selected-tab"])
         :title (:title tab)
         :on-click
         (fn [e]
           (cond
             (:editing @tab-state) nil
             (.-shiftKey e) (do
-                             (.stopPropagation e)
+                             (.preventDefault e)
                              (swap! tab-state assoc :editing true))
+            (.-metaKey e) (do
+                            (.preventDefault e)
+                            (if (state/is-tab-selected? tab)
+                              (state/remove-from-selection! tab)
+                              (state/add-to-selection! tab)))
             :default (actions/activate-tab! tab)))
         }
        [:div
@@ -131,7 +141,6 @@
       [button (fn [icon action-fn & params]
                 (apply
                  icon-button icon action-fn window params))]
-
     [:div {:class "window-actions"}
      (if (should-mask window)
        (button "eye" actions/set-window-masked! false)
@@ -140,7 +149,6 @@
        (button "window-restore" actions/show-window!)
        (button "window-minimize" actions/minimize-window!))
      (button "close" actions/close-window!)]))
-
 
 
 (defn window-view [window]
@@ -155,21 +163,27 @@
       (if is-devtools [:span {:style {:color "green"}} "devtools"])]
      (window-actions window)
      (if is-devtools
-       [tab-view (-> window :tabs first)] ;; assuming one tab for now       
-       (map
-        (fn [tab] 
-          ^{:key (:id tab)}
-          [drop-zone
-           {:drop-fn (partial actions/move-tabs! window (:index tab))
-            :drop-class "tab-drop-ready"}
-           [drag-source {:selection (:id tab)}
-            [tab-view tab]]])
-        (:tabs window)))
-      (if (not is-devtools)
-        [drop-zone
-         {:drop-fn (partial actions/move-tabs! window -1)
-          :drop-class "tab-drop-ready"}
-         [new-tab-input {:window window}]])]))
+       [tab-view (-> window :tabs first)])
+
+     (if (not is-devtools)
+       (->>
+        (:tabs window)
+        (util/mapall
+         (fn [tab]
+           ^{:key (:id tab)}
+           [drop-zone
+            {:drop-fn (partial actions/move-tabs! window (:index tab))
+             :drop-class "tab-drop-ready"
+             :on-drop state/clear-selection!}
+            [drag-source
+             {:selection
+              (conj (state/get-tab-selection) (:id tab))}
+             [tab-view tab]]]))))
+     (if (not is-devtools)
+       [drop-zone
+        {:drop-fn (partial actions/move-tabs! window -1)
+         :drop-class "tab-drop-ready"}
+        [new-tab-input {:window window}]])]))
 
 
 (defn search-box [ctx]
@@ -197,15 +211,16 @@
                        (merge w (get transient-windows k))))
                 (sort-by #(vector (-> % :type (= "normal")) (:id %)))
                 reverse)]
-   
     [:div
-     {:class (classes [(:drag-state @state/local-ctx) "drag-active"])}
+     {:class (classes [(state/is-drag-active?) "drag-active"])}
      ;;(search-box ctx)
      [:div
       [create-window-button false]
       [create-window-button true]]
      [:div {:class "top-flex"}
-      (map window-view windows)]]))
+      (->>
+       windows
+       (util/mapall window-view))]]))
 
 
 (defn render [ctx]

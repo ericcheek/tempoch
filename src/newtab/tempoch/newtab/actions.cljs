@@ -32,14 +32,16 @@
                  :query query
                  :active switch-to}))
 
-(defn move-tabs! [window index tab-or-tab-ids]
+(defn move-tabs! [& [window index tab-ids :as args]]
+  (state/clear-selection!) ;; feels like the wrong place for this
   (send-action! "move-tabs"
                 {:window-id (:id window)
                  :index index
-                 :tabs tab-or-tab-ids}))
+                 :tabs (into [] tab-ids)}))
 
 (defn open-window! [active incognito]
-  (send-action! "open-window" {:active active :incognito incognito}))
+  (send-action! "open-window"
+                {:active active :incognito incognito}))
 
 (defn minimize-window! [window]
   (send-action! "minimize-window"

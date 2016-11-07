@@ -9,4 +9,7 @@
             :default x)))
    (filter some?)
    (clojure.string/join " ")))
+
+(defn mapall [f items]
+  (->> items (map f) doall))
   

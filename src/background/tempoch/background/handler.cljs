@@ -46,9 +46,9 @@
                "active" active})))
 
    :move-tabs
-   (fn [{:keys [window-id index tabs]}]
+   (fn [{:keys [window-id index tabs] :as req}]
      (go (tabs/move
-          tabs
+          (clj->js tabs)
           #js {"windowId" window-id
                "index" index})))
 
