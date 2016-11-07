@@ -33,10 +33,11 @@
           (when (= (.-charCode e) 13)
             (on-enter e value)))}])))
 
-(defn drop-zone [{:keys [drop-fn drop-class]}]
+(defn drop-zone [{:keys [drop-fn drop-class tag] :or {tag :div}}]
   (let [activated (reagent/atom false)]
-    (fn [_ children]
-      [:div.drop-zone
+    (fn [_ & [child :as children]]
+      (if (util/multiple? children) (error "Only 1 child supported"))
+      [tag
        {:on-drag-enter
         (fn [e]
           (reset! activated true)
@@ -56,12 +57,13 @@
               (drop-fn selection))
             (reset! activated false)))
 
-        :class (classes [@activated drop-class])}
-       children])))
+        :class (classes "drop-zone" [@activated drop-class])}
+       child])))
 
-(defn drag-source [{:keys [selection]}]
-  (fn [{:keys [selection]} children]
-    [:div
+(defn drag-source [{:keys [selection tag] :or {tag :div}}]
+  (fn [_ & [child :as children]]
+    (if (util/multiple? children) (error "Only 1 child supported"))
+    [tag
      {:draggable true
 
       :on-drag-start
@@ -71,7 +73,7 @@
       :on-drag-end
         (fn [e]
           (state/clear-drag-state!))}
-      children]))
+      child]))
 
 (defn tab-actions [tab]
   [:div {:class "tab-actions"}
@@ -122,7 +124,6 @@
        (tab-actions tab)])))
 
 
-
 (defn new-tab-input [{:keys [window]}]
   [tab-nav-input
    {:on-enter (fn [e value]
@@ -142,6 +143,9 @@
                 (apply
                  icon-button icon action-fn window params))]
     [:div {:class "window-actions"}
+     [drag-source
+      {:selection (map :id (:tabs window)) :tag :button}
+      (fa-icon "list-alt")]
      (if (should-mask window)
        (button "eye" actions/set-window-masked! false)
        (button "eye-slash" actions/set-window-masked! true))

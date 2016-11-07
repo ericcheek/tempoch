@@ -12,4 +12,7 @@
 
 (defn mapall [f items]
   (->> items (map f) doall))
+
+(defn multiple? [l]
+  (> (count l) 1))
   
