@@ -24,9 +24,9 @@
    :activate-tab
    (fn [{:keys [tab-id window-id]}]
      (go
-       (windows/update window-id #js {"focused" true})
-       (when (> tab-id -1)
-         (tabs/update tab-id #js {"active" true}))))
+       (when (> tab-id -1) ;; only for regular windows
+         (tabs/update tab-id #js {"active" true}))
+       (windows/update window-id #js {"focused" true})))
    
    :close-tab
    (fn [{:keys [tab-id]}]
