@@ -1,5 +1,6 @@
 (ns tempoch.background.handler
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
+                   [tempoch.background.macros :refer [fn-lookup-table]])
   (:require [goog.string :as gstring]
             [goog.string.format]
             [cljs.core.async :refer [<! chan]]
@@ -18,7 +19,25 @@
    (and (some-> q url :host .-length (> 0)) (str "http://" q))
    (str"https://duckduckgo.com/?q=" (url-encode q))))
 
-
+;; caution: these will be directly invokable by incoming messages. requires some reconsideration with content script messaging or expanded api coverage
+(def chrome-handlers
+  (->>
+   [:windows/create
+    :windows/update
+    :windows/remove
+    :tabs/create    
+    :tabs/remove
+    :tabs/update
+    :tabs/move
+    :tabs/reload
+    :tabs/discard]
+   (map (fn [kw]
+          [kw (->
+               js/chrome
+               (aget (namespace kw))
+               (aget (name kw)))]))
+   (into {})))
+   
 (def handlers
   {
    :activate-tab
@@ -82,12 +101,22 @@
                     
 
 (defn handle-client-requests! [message]
-  (let [msg (js->clj message :keywordize-keys true)
-        action (-> msg :action keyword)        
-        handler (get handlers action)
-        params (:params msg)]
-    (if (nil? handler)
+  (log message)
+  (let [action (aget message "action")
+        params (aget message "params")
+        legacy-handler (get handlers (keyword action))]
+    (cond
+      (some? legacy-handler) (legacy-handler
+                              (js->clj params :keywordize-keys true))
+      
+      (= action "passthrough")
+      (go        
+        (doseq [[action-key & args :as command] (cljs.reader/read-string params)]
+          (apply
+           (get chrome-handlers action-key)
+           (->> args (map clj->js) into-array))))
+      
+      :default
       (error "No handler defined for message " message)
-      (handler params))))
-    
+      )))    
   
