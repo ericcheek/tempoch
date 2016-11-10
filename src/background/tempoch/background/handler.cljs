@@ -11,14 +11,6 @@
             [chromex.ext.runtime :as runtime]
             [tempoch.background.state :as state]))
 
-(defn format-query [q]
-  (or
-   (and (or
-         (.startsWith q "http://")
-         (.startsWith q "https://")) q)
-   (and (some-> q url :host .-length (> 0)) (str "http://" q))
-   (str"https://duckduckgo.com/?q=" (url-encode q))))
-
 ;; caution: these will be directly invokable by incoming messages. requires some reconsideration with content script messaging or expanded api coverage
 (def chrome-handlers
   (->>
@@ -40,63 +32,12 @@
    
 (def handlers
   {
-   :activate-tab
-   (fn [{:keys [tab-id window-id]}]
-     (go
-       (when (> tab-id -1) ;; only for regular windows
-         (tabs/update tab-id #js {"active" true}))
-       (windows/update window-id #js {"focused" true})))
-   
-   :close-tab
-   (fn [{:keys [tab-id]}]
-     (go (tabs/remove tab-id)))
-
-   :navigate-tab
-   (fn [{:keys [tab-id query]}]
-     (go
-       (tabs/update tab-id
-                    #js {"url" (format-query query)})))
-
-   :open-tab
-   (fn [{:keys [window-id query active]}]
-     (go (tabs/create
-          #js {"windowId" window-id
-               "url" (format-query query)
-               "active" active})))
-
-   :move-tabs
-   (fn [{:keys [window-id index tabs] :as req}]
-     (go (tabs/move
-          (clj->js tabs)
-          #js {"windowId" window-id
-               "index" index})))
-
-   :open-window
-   (fn [{:keys [active incognito]}]
-     (go (windows/create
-          #js{"incognito" incognito
-              "state" (if active "normal" "minimized")})))
-
+  
    :window-masked
    (fn [{:keys [window-id masked]}]
      (swap! state/ctx
             assoc-in [:transient :windows window-id :masked]
             masked))
-
-   :minimize-window
-   (fn[{:keys [window-id]}]
-     (go (windows/update window-id
-                         #js {"state" "minimized"})))
-
-   :show-window
-   (fn[{:keys [window-id]}]
-     (go (windows/update window-id
-                         #js {"state" "normal"})))
-
-   :close-window
-   (fn[{:keys [window-id]}]
-     (go (windows/remove window-id)))
-   
    })
                     
 
