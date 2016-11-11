@@ -24,9 +24,9 @@
 (defn send-action! [& action-specs]
   (send-action-legacy!
    "passthrough"
-   (prn-str (into [] action-specs))))
+   (pr-str (into [] action-specs))))
 
-    
+
 (defn activate-tab! [tab]
   (send-action!
    [:tabs/update (:id tab) {:active true}]
@@ -62,16 +62,18 @@
 (defn minimize-window! [window]
   (send-action!
    [:windows/update (:id window) {:state "minimized"}]))
-  
+
 (defn set-window-masked! [window masked]
-  (send-action-legacy! "window-masked"
-                {:window-id (:id window)
-                 :masked masked}))
+  (send-action!
+   [:td/set-transient
+    (->
+     (state/get-transient)
+     (assoc-in [:windows (:id window) :masked] masked)
+     pr-str)]))
 
 (defn show-window! [window]
   (send-action!
    [:windows/update (:id window) {:state "normal"}]))
-
 
 (defn close-window! [window]
   (send-action!

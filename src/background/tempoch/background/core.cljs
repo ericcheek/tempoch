@@ -54,7 +54,7 @@
   (post-message! client
                  (clj->js
                   {:action "set-context"
-                   :params ctx})))
+                   :params (pr-str ctx)})))
 
 (defn context-broadcaster [key ref old-ctx new-ctx]
   (go

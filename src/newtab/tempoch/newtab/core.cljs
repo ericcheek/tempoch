@@ -11,9 +11,9 @@
 (defn process-message! [message]  
   (cond
     (= (aget message "action") "set-context")
-    (swap! state/app-ctx assoc-in [:bg-state]
-           (js->clj (aget message "params")
-                    :keywordize-keys true))
+    (swap! state/app-ctx
+           assoc :bg-state
+           (cljs.reader/read-string (aget message "params")))
     
     :default (log "NEWTAB: got message:" message)))
 

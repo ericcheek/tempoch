@@ -10,6 +10,10 @@
 (defonce app-ctx
   (reagent/atom {}))
 
+(defn get-transient []
+  (-> @app-ctx :bg-state :transient))
+  
+
 (defn get-drag-state []
   (:drag-state @local-ctx))
 
