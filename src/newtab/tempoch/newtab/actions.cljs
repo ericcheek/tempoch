@@ -65,9 +65,9 @@
 
 (defn set-window-masked! [window masked]
   (send-ops!
-   [:td/set-transient
+   [:td/set-persistent
     (->
-     (state/get-transient)
+     (state/get-persistent)
      (assoc-in [:windows (:id window) :masked] masked)
      pr-str)]))
 

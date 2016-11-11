@@ -12,7 +12,10 @@
 
 (defn get-transient []
   (-> @app-ctx :bg-state :transient))
-  
+
+(defn get-persistent []
+  (-> @app-ctx :bg-state :persistent))
+
 
 (defn get-drag-state []
   (:drag-state @local-ctx))

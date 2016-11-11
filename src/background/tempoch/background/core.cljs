@@ -8,6 +8,7 @@
             [chromex.protocols :refer [post-message! get-sender]]
             [chromex.ext.tabs :as tabs]
             [chromex.ext.windows :as windows]
+            [chromex.ext.storage :as storage]
             [chromex.ext.runtime :as runtime]
             [tempoch.background.storage :refer [test-storage!]]
             [tempoch.background.state :as state]
@@ -91,6 +92,8 @@
   (let [[event-id event-args] event]
     (when (= event-id ::runtime/on-connect)
       (apply handle-client-connection! event-args))
+    (when (= event-id ::storage/on-changed)
+      (apply state/handle-storage-change! event-args))
     (when (contains?
            #{::tabs/on-created
              ::tabs/on-updated
@@ -120,7 +123,9 @@
     (tabs/tap-all-events chrome-event-channel)
     (windows/tap-all-events chrome-event-channel)
     (runtime/tap-all-events chrome-event-channel)
+    (storage/tap-all-events chrome-event-channel)
     (run-chrome-event-loop! chrome-event-channel)
+    (state/init-state!)
     (add-watch state/ctx :context-broadcaster context-broadcaster)))
 
 ; -- main entry point -------------------------------------------------------------------------------------------------------

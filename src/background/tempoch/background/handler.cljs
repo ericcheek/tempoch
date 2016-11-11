@@ -36,19 +36,10 @@
    (map chrome-api-handler-entry)
    (into {})))
 
-(defn set-persistent-state! [edn-value]
-  (swap! state/ctx
-         assoc :persistent
-         (cljs.reader/read-string edn-value)))
-
-(defn set-transient-state! [edn-value]
-  (swap! state/ctx
-         assoc :transient
-         (cljs.reader/read-string edn-value)))
-
 (def handlers
   (->
-   {:td/set-transient set-transient-state!}
+   {:td/set-transient state/set-transient!
+    :td/set-persistent state/set-persistent!}
    (merge chrome-handlers)))
 
 (defn handle-client-requests! [message]
