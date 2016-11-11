@@ -7,12 +7,10 @@
             [tempoch.newtab.state :as state]))
 
 (defn format-query [q]
-  (or
-   (and (or
-         (.startsWith q "http://")
-         (.startsWith q "https://")) q)
-   (and (some-> q url-helper/url :host .-length (> 0)) (str "http://" q))
-   (str"https://duckduckgo.com/?q=" (url-helper/url-encode q))))
+  (cond
+    (re-matches #"https?://.*" q) q
+    (re-matches #".*\..{2,3}(/.*)?" q) (str "https://" q)
+    :default (str "https://duckduckgo.com/?q=" (url-helper/url-encode q))))
 
 (defn send-action! [action params]
   (post-message!
