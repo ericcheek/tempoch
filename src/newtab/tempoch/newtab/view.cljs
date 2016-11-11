@@ -208,11 +208,11 @@
 (defn app-view [ctx]
   (let
       [chrome-windows (->> @ctx :bg-state :chrome :windows)
-       transient-windows (->> @ctx :bg-state :transient :windows)
+       persistent-windows (->> @ctx :bg-state :persistent :windows)
        windows (->>
                 chrome-windows
                 (map (fn [[k w]]
-                       (merge w (get transient-windows k))))
+                       (merge w (get persistent-windows k))))
                 (sort-by #(vector (-> % :type (= "normal")) (:id %)))
                 reverse)]
     [:div

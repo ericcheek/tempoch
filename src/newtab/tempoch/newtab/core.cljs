@@ -8,7 +8,7 @@
             [tempoch.newtab.view :as view]))
 
 ;; -- a message loop ---------------------------------------------------------------------------------------------------------
-(defn process-message! [message]  
+(defn process-message! [message]
   (cond
     (= (aget message "action") "set-context")
     (swap! state/app-ctx
