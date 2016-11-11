@@ -52,15 +52,10 @@
    (merge chrome-handlers)))
 
 (defn handle-client-requests! [message]
-  (log message)
   (let [action (aget message "action")
-        params (aget message "params")
-        legacy-handler (get handlers (keyword action))]
+        params (aget message "params")]
     (cond
-      (some? legacy-handler) (legacy-handler
-                              (js->clj params :keywordize-keys true))
-
-      (= action "passthrough")
+      (= action "batch-ops")
       (go
         (doseq [[action-key & args] (cljs.reader/read-string params)]
           (apply (get handlers action-key) args)))
