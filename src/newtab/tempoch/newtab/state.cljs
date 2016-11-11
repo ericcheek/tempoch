@@ -10,6 +10,10 @@
 (defonce app-ctx
   (reagent/atom {}))
 
+(defn get-chrome []
+  (-> @app-ctx :bg-state :chrome))
+
+
 (defn get-transient []
   (-> @app-ctx :bg-state :transient))
 

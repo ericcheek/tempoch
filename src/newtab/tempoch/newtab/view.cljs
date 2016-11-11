@@ -10,13 +10,19 @@
 (defn fa-icon [name]
   [:i {:class (str "fa fa-" name) :aria-hidden true}])
 
-(defn icon-button [icon action-fn & params]
+(defn icon-button-e [icon action-fn & params]
   [:button
    {:on-click
     (fn [e]
       (.stopPropagation e)
-      (apply action-fn params))}
+      (apply action-fn e params))}
    (fa-icon icon)])
+
+(defn icon-button [icon action-fn & params]
+  (apply icon-button-e
+         icon
+         (fn [e & args] (apply action-fn args))
+         params))
 
 (defn tab-nav-input [{:keys [on-enter classes initial-value]}]
   (let [value (reagent/atom (or initial-value ""))]
@@ -82,6 +88,26 @@
     (fa-icon "link")]
    (icon-button "close" actions/close-tab! tab)])
 
+(defn tab-audio-control [tab]
+  (let
+      [click-handler
+       (fn [e should-mute]
+         (when (.-shiftKey e)
+           (actions/mute-other-tabs! tab))
+         (actions/set-tab-mute! tab should-mute))]
+  (cond
+    (-> tab :mutedInfo :muted)
+    (icon-button-e
+     "volume-off"
+     click-handler false)
+
+    (-> tab :audible)
+    (icon-button-e
+     "volume-up"
+     click-handler true)
+
+    :default nil)))
+
 (defn tab-view [tab]
   (let [tab-state
         (reagent/atom {:editing false})]
@@ -107,10 +133,7 @@
             :default (actions/activate-tab! tab)))
         }
        [:div
-        (cond
-          (-> tab :mutedInfo :muted) (fa-icon "volume-off")
-          (-> tab :audible) (fa-icon "volume-up")
-          :default nil)
+        [tab-audio-control tab]
         (if (-> tab :incognito) (fa-icon "user-secret"))
         (if (-> @tab-state :editing)
           [tab-nav-input
@@ -207,8 +230,8 @@
 
 (defn app-view [ctx]
   (let
-      [chrome-windows (->> @ctx :bg-state :chrome :windows)
-       persistent-windows (->> @ctx :bg-state :persistent :windows)
+      [chrome-windows (-> (state/get-chrome) :windows)
+       persistent-windows (-> (state/get-persistent) :windows)
        windows (->>
                 chrome-windows
                 (map (fn [[k w]]

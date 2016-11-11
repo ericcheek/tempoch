@@ -54,6 +54,23 @@
     {:windowId (:id window)
      :index index}]))
 
+(defn set-tab-mute! [tab muted]
+  (send-ops! [:tabs/update (:id tab) {:muted muted}]))
+
+(defn mute-other-tabs! [tab]
+  (apply send-ops!
+   (->>
+    (state/get-chrome)
+    :windows
+    vals
+    (mapcat :tabs)
+    (filter (fn [{tid :id audible :audible {muted :muted} :mutedInfo}]
+              (and
+               (not= tid (:id tab))
+               audible
+               (not muted))))
+    (map #(vector :tabs/update (:id %) {:muted true})))))
+
 (defn open-window! [active incognito]
   (send-ops!
    [:windows/create {:incognito incognito
