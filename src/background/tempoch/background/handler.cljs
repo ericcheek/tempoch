@@ -16,9 +16,27 @@
                    (aget (name kw)))]
     [kw
      (fn [& args]
-       (apply
-        api-fn
-        (->> args (map clj->js) into-array)))]))
+       (go
+         (apply
+          api-fn
+          (->> args (map clj->js) into-array))))]))
+
+(defn open-window-with-tabs [{[tab-id & tab-ids] :tabIds :as options}]
+  (go
+    (let
+        [options' (->
+                   options
+                   (assoc :tabId tab-id)
+                   (dissoc :tabIds)
+                   clj->js)
+         [window] (<! (windows/create options'))
+         window-id (aget window "id")]
+      (when (pos? (count tab-ids))
+        (tabs/move
+         (clj->js tab-ids)
+         (clj->js
+          {:windowId window-id
+           :index -1}))))))
 
 ;; caution: these will be directly invokable by incoming messages.
 ;; requires some reconsideration with content script messaging or expanded api coverage
@@ -38,7 +56,8 @@
 
 (def handlers
   (->
-   {:td/set-transient state/set-transient!
+   {:td/open-window-with-tabs open-window-with-tabs
+    :td/set-transient state/set-transient!
     :td/set-persistent state/set-persistent!}
    (merge chrome-handlers)))
 
@@ -47,9 +66,8 @@
         params (aget message "params")]
     (cond
       (= action "batch-ops")
-      (go
-        (doseq [[action-key & args] (cljs.reader/read-string params)]
-          (apply (get handlers action-key) args)))
+      (doseq [[action-key & args] (cljs.reader/read-string params)]
+        (apply (get handlers action-key) args))
 
       :default
       (error "No handler defined for message " message)

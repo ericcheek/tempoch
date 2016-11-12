@@ -39,9 +39,9 @@
           (when (= (.-charCode e) 13)
             (on-enter e value)))}])))
 
-(defn drop-zone [{:keys [drop-fn drop-class tag] :or {tag :div}}]
+(defn drop-zone [& _]
   (let [activated (reagent/atom false)]
-    (fn [_ & [child :as children]]
+    (fn [{:keys [drop-fn drop-class tag] :or {tag :div}} & [child :as children]]
       (if (util/multiple? children) (error "Only 1 child supported"))
       [tag
        {:on-drag-enter
@@ -66,8 +66,8 @@
         :class (classes "drop-zone" [@activated drop-class])}
        child])))
 
-(defn drag-source [{:keys [selection tag] :or {tag :div}}]
-  (fn [_ & [child :as children]]
+(defn drag-source [& _]
+  (fn [{:keys [selection tag] :or {tag :div}} & [child :as children]]
     (if (util/multiple? children) (error "Only 1 child supported"))
     [tag
      {:draggable true
@@ -77,14 +77,14 @@
         (state/set-drag-selection! selection))
 
       :on-drag-end
-        (fn [e]
-          (state/clear-drag-state!))}
-      child]))
+      (fn [e]
+        (state/clear-drag-state!))}
+     child]))
 
 (defn tab-actions [tab]
   [:div {:class "tab-actions"}
    [:a {:href (:url tab)
-       :on-click (fn [e] (.stopPropagation e))}
+        :on-click (fn [e] (.stopPropagation e))}
     (fa-icon "link")]
    (icon-button "close" actions/close-tab! tab)])
 
@@ -95,18 +95,18 @@
          (when (.-shiftKey e)
            (actions/mute-other-tabs! tab))
          (actions/set-tab-mute! tab should-mute))]
-  (cond
-    (-> tab :mutedInfo :muted)
-    (icon-button-e
-     "volume-off"
-     click-handler false)
+    (cond
+      (-> tab :mutedInfo :muted)
+      (icon-button-e
+       "volume-off"
+       click-handler false)
 
-    (-> tab :audible)
-    (icon-button-e
-     "volume-up"
-     click-handler true)
+      (-> tab :audible)
+      (icon-button-e
+       "volume-up"
+       click-handler true)
 
-    :default nil)))
+      :default nil)))
 
 (defn tab-view [tab]
   (let [tab-state
@@ -185,6 +185,7 @@
                            [(:focused window) "active-window"]
                            [(should-mask window) "masked-details"])
            :key (:id window)}
+
      [:div {:class "window-title"}
       (if (:incognito window) [:span {:style {:color "red"}} "incognito"])
       (if is-devtools [:span {:style {:color "green"}} "devtools"])]
@@ -219,13 +220,17 @@
 
 
 (defn create-window-button [is-incognito]
-  [:button
-   {:on-click (fn [e]
-                (actions/open-window!
-                 (-> e .-shiftKey not)
-                 is-incognito))}
-   (if is-incognito
-     "+incognito" "+window")])
+  [drop-zone
+   {:drop-fn (partial actions/open-window-with-tabs! is-incognito)
+    :drop-class "tab-drop-ready"
+    :tag :span}
+   [:button
+    {:on-click (fn [e]
+                 (actions/open-window!
+                  (-> e .-shiftKey not)
+                  is-incognito))}
+    (if is-incognito
+      "+incognito" "+window")]])
 
 
 (defn app-view [ctx]

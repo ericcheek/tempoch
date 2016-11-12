@@ -22,12 +22,16 @@
 (defn send-ops! [& action-specs]
   (send-action!
    "batch-ops"
-   (pr-str (into [] action-specs))))
-
+   (->>
+    action-specs
+    (filter some?)
+    (into [])
+    (pr-str))))
 
 (defn activate-tab! [tab]
   (send-ops!
-   [:tabs/update (:id tab) {:active true}]
+   (if (-> tab :id (> -1))
+     [:tabs/update (:id tab) {:active true}])
    [:windows/update (:windowId tab) {:focused true}]))
 
 (defn navigate-tab! [tab query]
@@ -45,12 +49,13 @@
                   :active switch-to}]))
 
 (defn move-tabs! [window index tab-ids]
-  (state/clear-selection!) ;; feels like the wrong place for this
   (send-ops!
    [:tabs/move
     (into [] tab-ids)
     {:windowId (:id window)
-     :index index}]))
+     :index index}])
+  (state/clear-selection!) ; feels like the wrong place for this
+  )
 
 (defn set-tab-mute! [tab muted]
   (send-ops! [:tabs/update (:id tab) {:muted muted}]))
@@ -68,6 +73,15 @@
                audible
                (not muted))))
     (map #(vector :tabs/update (:id %) {:muted true})))))
+
+(defn open-window-with-tabs! [incognito tab-ids]
+  (send-ops!
+   [:td/open-window-with-tabs
+    {:tabIds (into [] tab-ids)
+     :incognito incognito
+     :state "minimized"}])
+  (state/clear-selection!) ; feels like the wrong place for this
+  )
 
 (defn open-window! [active incognito]
   (send-ops!
