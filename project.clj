@@ -20,6 +20,7 @@
 
   :source-paths ["src/background"
                  "src/popup"
+                 "src/common"
                  "src/content_script"
                  "src/newtab"]
 
@@ -32,7 +33,7 @@
   :profiles {:unpacked
              {:cljsbuild {:builds
                           {:background
-                           {:source-paths ["src/background"]
+                           {:source-paths ["src/background" "src/common"]
                             :figwheel     true
                             :compiler     {:output-to     "resources/unpacked/compiled/background/main.js"
                                            :output-dir    "resources/unpacked/compiled/background"
@@ -42,7 +43,7 @@
                                            :optimizations :none
                                            :source-map    true}}
                            :newtab
-                           {:source-paths ["src/newtab"]
+                           {:source-paths ["src/newtab" "src/common"]
                             :figwheel     true
                             :compiler     {:output-to     "resources/unpacked/compiled/newtab/main.js"
                                            :output-dir    "resources/unpacked/compiled/newtab"
@@ -52,7 +53,7 @@
                                            :optimizations :none
                                            :source-map    true}}
                            :popup
-                           {:source-paths ["src/popup"]
+                           {:source-paths ["src/popup" "src/common"]
                             :figwheel     true
                             :compiler     {:output-to     "resources/unpacked/compiled/popup/main.js"
                                            :output-dir    "resources/unpacked/compiled/popup"

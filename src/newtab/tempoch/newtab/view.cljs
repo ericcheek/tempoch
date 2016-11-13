@@ -2,6 +2,7 @@
   (:require
    [chromex.logging :refer-macros [log info warn error group group-end]]
    [reagent.core :as reagent]
+   [tempoch.common.macros :refer-macros [evfn]]
    [tempoch.newtab.actions :as actions]
    [tempoch.newtab.state :as state]
    [tempoch.newtab.util :refer [classes] :as util]))
@@ -13,8 +14,7 @@
 (defn icon-button-e [icon action-fn & params]
   [:button
    {:on-click
-    (fn [e]
-      (.stopPropagation e)
+    (evfn ^:stop [e]
       (apply action-fn e params))}
    (fa-icon icon)])
 
@@ -45,19 +45,19 @@
       (if (util/multiple? children) (error "Only 1 child supported"))
       [tag
        {:on-drag-enter
-        (fn [e]
+        (evfn [e]
           (reset! activated true)
           (state/set-drop-fn! drop-fn))
 
         :on-drag-over
-        (fn [e] (.preventDefault e))
+        (evfn ^:prevent [e])
 
         :on-drag-leave
-        (fn [e]
+        (evfn [e]
           (reset! activated false))
 
         :on-drop
-        (fn [e]
+        (evfn [e]
           (let [{:keys [drop-fn selection]} (state/get-drag-state)]
             (when drop-fn
               (drop-fn selection))
@@ -73,25 +73,25 @@
      {:draggable true
 
       :on-drag-start
-      (fn [e]
+      (evfn [e]
         (state/set-drag-selection! selection))
 
       :on-drag-end
-      (fn [e]
+      (evfn [e]
         (state/clear-drag-state!))}
      child]))
 
 (defn tab-actions [tab]
   [:div {:class "tab-actions"}
    [:a {:href (:url tab)
-        :on-click (fn [e] (.stopPropagation e))}
+        :on-click (evfn ^:stop [e])}
     (fa-icon "link")]
    (icon-button "close" actions/close-tab! tab)])
 
 (defn tab-audio-control [tab]
   (let
       [click-handler
-       (fn [e should-mute]
+       (evfn [e should-mute]
          (when (.-shiftKey e)
            (actions/mute-other-tabs! tab))
          (actions/set-tab-mute! tab should-mute))]
@@ -119,17 +119,13 @@
                 [(state/is-tab-selected? tab) "selected-tab"])
         :title (:title tab)
         :on-click
-        (fn [e]
+        (evfn ^:prevent [e]
           (cond
             (:editing @tab-state) nil
-            (.-shiftKey e) (do
-                             (.preventDefault e)
-                             (swap! tab-state assoc :editing true))
-            (.-metaKey e) (do
-                            (.preventDefault e)
-                            (if (state/is-tab-selected? tab)
+            (.-shiftKey e) (swap! tab-state assoc :editing true)
+            (.-metaKey e) (if (state/is-tab-selected? tab)
                               (state/remove-from-selection! tab)
-                              (state/add-to-selection! tab)))
+                              (state/add-to-selection! tab))
             :default (actions/activate-tab! tab)))
         }
        [:div
@@ -225,7 +221,7 @@
     :drop-class "tab-drop-ready"
     :tag :span}
    [:button
-    {:on-click (fn [e]
+    {:on-click (evfn [e]
                  (actions/open-window!
                   (-> e .-shiftKey not)
                   is-incognito))}
