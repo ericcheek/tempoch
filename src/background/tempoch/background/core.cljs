@@ -80,41 +80,49 @@
                    :keywordize-keys true)
                   (map (fn [w] [(:id w) w]))
                   (into {}))]
-    (swap! state/ctx
-           assoc-in
-           [:chrome :windows]
-           windows))))
+      (swap! state/ctx
+             assoc-in
+             [:chrome :windows]
+             windows))))
 
 
 ;; -- main event loop --------------------------------------------------------------------------------------------------------
 
 (defn process-chrome-event [event-num event]
   (let [[event-id event-args] event]
-    (when (= event-id ::runtime/on-connect)
-      (apply handle-client-connection! event-args))
-    (when (= event-id ::storage/on-changed)
-      (apply state/handle-storage-change! event-args))
-    (when (contains?
-           #{::tabs/on-created
-             ::tabs/on-updated
-             ::tabs/on-moved
-             ::tabs/on-active-changed
-             ::tabs/on-highlight-changed
-             ::tabs/on-removed           
-             ::windows/on-updated
-             ::tabs/on-detached
-             ::tabs/on-attached
-             ::windows/on-created
-             ::windows/on-removed
-             ::windows/on-focus-changed}
-           event-id)
-      (update-window-data!))))
+    (cond
+      (= event-id ::runtime/on-connect)
+      (apply handle-client-connection! event-args)
+
+      (= event-id ::storage/on-changed)
+      (apply state/handle-storage-change! event-args)
+
+      (contains?
+       #{::tabs/on-created
+         ::tabs/on-updated
+         ::tabs/on-moved
+         ::tabs/on-active-changed
+         ::tabs/on-highlight-changed
+         ::tabs/on-removed
+         ::windows/on-updated
+         ::tabs/on-detached
+         ::tabs/on-attached
+         ::windows/on-created
+         ::windows/on-removed
+         ::windows/on-focus-changed}
+       event-id)
+      (update-window-data!)
+
+      :default
+      (warn "No handler for event" event))))
 
 (defn run-chrome-event-loop! [chrome-event-channel]
   (log "BACKGROUND: starting main event loop...")
   (go-loop [event-num 1]
     (when-let [event (<! chrome-event-channel)]
-      (process-chrome-event event-num event)
+      (try
+        (process-chrome-event event-num event)
+        (catch js/Error e (error e)))
       (recur (inc event-num)))
     (log "BACKGROUND: leaving main event loop")))
 
@@ -128,7 +136,7 @@
     (state/init-state!)
     (add-watch state/ctx :context-broadcaster context-broadcaster)))
 
-; -- main entry point -------------------------------------------------------------------------------------------------------
+;; -- main entry point -------------------------------------------------------------------------------------------------------
 
 
 
