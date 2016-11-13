@@ -61,6 +61,7 @@
     :td/set-persistent state/set-persistent!}
    (merge chrome-handlers)))
 
+
 (defn handle-client-requests! [message]
   (let [action (aget message "action")
         params (aget message "params")]

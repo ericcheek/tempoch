@@ -104,17 +104,22 @@
          ::tabs/on-active-changed
          ::tabs/on-highlight-changed
          ::tabs/on-removed
-         ::windows/on-updated
          ::tabs/on-detached
          ::tabs/on-attached
+         ::windows/on-updated
          ::windows/on-created
          ::windows/on-removed
          ::windows/on-focus-changed}
        event-id)
       (update-window-data!)
 
+      (contains?
+       #{::tabs/on-highlighted}
+       event-id)
+      nil ;; ignored
+
       :default
-      (warn "No handler for event" event))))
+      (log "No handler for event" (pr-str event)))))
 
 (defn run-chrome-event-loop! [chrome-event-channel]
   (log "BACKGROUND: starting main event loop...")
@@ -145,5 +150,3 @@
   ;;(test-storage!)
   (update-window-data!)
   (boot-chrome-event-loop!))
-
-
