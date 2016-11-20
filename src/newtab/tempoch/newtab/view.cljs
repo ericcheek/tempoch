@@ -148,7 +148,7 @@
    {:on-enter (fn [e value]
                 (actions/open-tab!
                  window
-                 @value
+                 (if (pos? (count @value)) @value)
                  (not (.-shiftKey e)))
                 (reset! value ""))
     :classes "new-tab-input"}])

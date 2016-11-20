@@ -44,9 +44,11 @@
 
 (defn open-tab! [window query switch-to]
   (send-ops!
-   [:tabs/create {:windowId (:id window)
-                  :url (format-query query)
-                  :active switch-to}]))
+   [:tabs/create
+    (merge
+     {:windowId (:id window)
+      :active switch-to}
+     (if query {:url (format-query query)}))]))
 
 (defn move-tabs! [window index tab-ids]
   (send-ops!
