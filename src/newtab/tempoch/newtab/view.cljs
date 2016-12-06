@@ -142,7 +142,6 @@
            (:title tab)])]
        (tab-actions tab)])))
 
-
 (defn new-tab-input [{:keys [window]}]
   [tab-nav-input
    {:on-enter (fn [e value]
@@ -173,13 +172,14 @@
        (button "window-minimize" actions/minimize-window!))
      (button "close" actions/close-window!)]))
 
-
-(defn window-view [window]
+(defn window-view [window {vis-forced :force-visible}]
   (let
       [is-devtools (-> window :type (= "devtools"))]
     [:div {:class (classes "window-view"
                            [(:focused window) "active-window"]
-                           [(should-mask window) "masked-details"])
+                           [(and
+                             (not vis-forced)
+                             (should-mask window)) "masked-details"])
            :key (:id window)}
 
      [:div {:class "window-title"}
@@ -209,11 +209,9 @@
          :drop-class "tab-drop-ready"}
         [new-tab-input {:window window}]])]))
 
-
 (defn search-box [ctx]
   [:div {:class "search-box"}
    [:input {:type "text"}]])
-
 
 (defn create-window-button [is-incognito]
   [drop-zone
@@ -228,28 +226,32 @@
     (if is-incognito
       "+incognito" "+window")]])
 
-
-(defn app-view [ctx]
+(defn app-view [_]
   (let
-      [chrome-windows (-> (state/get-chrome) :windows)
-       persistent-windows (-> (state/get-persistent) :windows)
-       windows (->>
-                chrome-windows
-                (map (fn [[k w]]
-                       (merge w (get persistent-windows k))))
-                (sort-by #(vector (-> % :type (= "normal")) (:id %)))
-                reverse)]
-    [:div
-     {:class (classes [(state/is-drag-active?) "drag-active"])}
-     ;;(search-box ctx)
-     [:div
-      [create-window-button false]
-      [create-window-button true]]
-     [:div {:class "top-flex"}
-      (->>
-       windows
-       (util/mapall window-view))]]))
-
+      [force-visibile-windows (reagent/atom nil)]
+    (fn [ctx]
+      (let
+          [chrome-windows (-> (state/get-chrome) :windows)
+           persistent-windows (-> (state/get-persistent) :windows)
+           windows (->>
+                    chrome-windows
+                    (map (fn [[k w]]
+                           (merge w (get persistent-windows k))))
+                    (sort-by #(vector (-> % :type (= "normal")) (:id %)))
+                    reverse)]
+      [:div
+       {:class (classes [(state/is-drag-active?) "drag-active"])}
+       ;;(search-box ctx)
+       [:div
+        [create-window-button false]
+        [create-window-button true]
+        (if @force-visibile-windows
+          [icon-button "low-vision" #(reset! force-visibile-windows nil)]
+          [icon-button "eye" #(reset! force-visibile-windows true)])]
+       [:div {:class "top-flex"}
+        (util/mapall
+         (fn [w] (window-view w {:force-visible @force-visibile-windows}))
+         windows)]]))))
 
 (defn render [ctx]
   (reagent/render

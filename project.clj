@@ -90,6 +90,7 @@
 
              :figwheel
              {:figwheel {:server-port    6888
+                         :server-ip "127.0.0.1"
                          :server-logfile ".figwheel_dirac.log"
                          :repl           false}}
 
