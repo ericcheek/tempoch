@@ -130,7 +130,6 @@
         }
        [:div
         [tab-audio-control tab]
-        (if (-> tab :incognito) (fa-icon "user-secret"))
         (if (-> @tab-state :editing)
           [tab-nav-input
            {:on-enter (fn [e value]
@@ -183,7 +182,7 @@
            :key (:id window)}
 
      [:div {:class "window-title"}
-      (if (:incognito window) [:span {:style {:color "red"}} "incognito"])
+      (if (:incognito window) [:span {:style {:color "#dc322f"}} "incognito"])
       (if is-devtools [:span {:style {:color "green"}} "devtools"])]
      (window-actions window)
      (if is-devtools
