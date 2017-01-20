@@ -253,6 +253,7 @@
          windows)]]))))
 
 (defn render [ctx]
+  (log (js/window.performance.now))
   (reagent/render
    [app-view ctx]
    (.getElementById js/document "app")))

@@ -10,6 +10,7 @@
             [chromex.ext.windows :as windows]
             [chromex.ext.storage :as storage]
             [chromex.ext.runtime :as runtime]
+            [tempoch.common.macros :refer-macros [time-operation]]
             [tempoch.background.storage :refer [test-storage!]]
             [tempoch.background.state :as state]
             [tempoch.background.handler :refer [handle-client-requests!]]))
@@ -51,24 +52,25 @@
 
 ;; -- event handlers ---------------------------------------------------------------------------------------------------------
 
-(defn send-context! [client ctx]
-  (post-message! client
-                 (clj->js
-                  {:action "set-context"
-                   :params (pr-str ctx)})))
+(defn format-context-message [ctx]
+  (clj->js
+   {:action "set-context"
+    :params (pr-str ctx)}))
 
 (defn context-broadcaster [key ref old-ctx new-ctx]
-  (go
-    (doseq [client @clients]
-      (try
-        (send-context! client new-ctx)
-        (catch js/Error e (remove-client! client))))))
+  (let
+      [context-message (format-context-message new-ctx)]
+    (go
+      (doseq [client @clients]
+        (try
+          (post-message! client context-message)
+          (catch js/Error e (remove-client! client)))))))
 
 
 (defn handle-client-connection! [client]
   (add-client! client)
   (post-message! client "hello from BACKGROUND PAGE!")
-  (go (send-context! client @state/ctx))
+  (go (post-message! client (format-context-message @state/ctx)))
   (run-client-message-loop! client))
 
 (defn update-window-data! []

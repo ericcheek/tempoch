@@ -4,6 +4,7 @@
             [chromex.logging :refer-macros [log info warn error group group-end]]
             [chromex.protocols :refer [post-message!]]
             [chromex.ext.runtime :as runtime :refer-macros [connect]]
+            [tempoch.common.macros :refer-macros [time-operation]]
             [tempoch.newtab.state :as state]
             [tempoch.newtab.view :as view]))
 
