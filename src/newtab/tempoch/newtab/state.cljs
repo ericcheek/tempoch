@@ -13,13 +13,11 @@
 (defn get-chrome []
   (-> @app-ctx :bg-state :chrome))
 
-
 (defn get-transient []
   (-> @app-ctx :bg-state :transient))
 
 (defn get-persistent []
   (-> @app-ctx :bg-state :persistent))
-
 
 (defn get-drag-state []
   (:drag-state @local-ctx))
@@ -45,7 +43,6 @@
   (swap! local-ctx
          assoc :drag-state
          nil))
-
 
 (defn get-tab-selection []
   (:tab-selection @local-ctx))
